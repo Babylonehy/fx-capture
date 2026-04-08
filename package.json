@@ -1,6 +1,6 @@
 {
   "name": "bonnie-fx-capture",
-  "version": "0.2.1",
+  "version": "0.2.5",
   "description": "Electron desktop app for querying Bank of China FX pages by date and saving screenshots.",
   "main": "src/main.js",
   "author": "XiangLi",

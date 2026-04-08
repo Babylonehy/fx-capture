@@ -1,15 +1,59 @@
 const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron');
+const fsSync = require('node:fs');
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
 const APP_URL = 'https://srh.bankofchina.com/search/whpj/search_cn.jsp';
 const DEFAULT_WINDOW = { width: 1280, height: 900 };
+const STARTUP_LOG_FILE = 'startup.log';
+const IS_WINDOWS_NETWORK_SHARE =
+  process.platform === 'win32' && [process.cwd(), process.execPath].some((value) => String(value || '').startsWith('\\\\'));
 
 let mainWindow = null;
 let activeJob = null;
 let pendingCaptchaResolver = null;
 
+if (IS_WINDOWS_NETWORK_SHARE) {
+  app.commandLine.appendSwitch('no-sandbox');
+  app.disableHardwareAcceleration();
+}
+
+function getStartupLogDirectories() {
+  const directories = new Set([process.cwd()]);
+
+  if (app.isPackaged) {
+    directories.add(path.dirname(process.execPath));
+  }
+
+  return Array.from(directories).filter(Boolean);
+}
+
+function appendStartupLog(message) {
+  const line = `[${new Date().toISOString()}] ${message}\n`;
+
+  for (const directory of getStartupLogDirectories()) {
+    try {
+      fsSync.mkdirSync(directory, { recursive: true });
+      fsSync.appendFileSync(path.join(directory, STARTUP_LOG_FILE), line, 'utf8');
+    } catch (_error) {
+      // Ignore logging failures to avoid cascading startup issues.
+    }
+  }
+}
+
+function formatError(error) {
+  if (error instanceof Error) {
+    return `${error.name}: ${error.message}\n${error.stack || ''}`.trim();
+  }
+
+  return String(error);
+}
+
 function createMainWindow() {
+  const rendererEntry = path.join(__dirname, 'renderer', 'index.html');
+  const rendererUrl = pathToFileURL(rendererEntry).toString();
+
   mainWindow = new BrowserWindow({
     width: 1440,
     height: 1080,
@@ -24,7 +68,27 @@ function createMainWindow() {
   });
 
   mainWindow.setTitle('Bonnie FX Capture');
-  mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  appendStartupLog(`main-window-entry: file=${rendererEntry} url=${rendererUrl}`);
+  mainWindow.loadURL(rendererUrl).catch((error) => {
+    appendStartupLog(`main-window-load-exception: ${formatError(error)}`);
+  });
+
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
+    appendStartupLog(`renderer-gone: reason=${details.reason} exitCode=${details.exitCode}`);
+  });
+
+  mainWindow.webContents.on(
+    'did-fail-load',
+    (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (!isMainFrame) {
+        return;
+      }
+
+      appendStartupLog(
+        `main-window-load-failed: code=${errorCode} desc=${errorDescription} url=${validatedURL}`
+      );
+    }
+  );
 }
 
 function sendToRenderer(channel, payload) {
@@ -745,7 +809,24 @@ ipcMain.handle('captcha:cancel', async () => {
   }
 });
 
+process.on('uncaughtException', (error) => {
+  appendStartupLog(`uncaught-exception: ${formatError(error)}`);
+});
+
+process.on('unhandledRejection', (reason) => {
+  appendStartupLog(`unhandled-rejection: ${formatError(reason)}`);
+});
+
+appendStartupLog(
+  `process-start cwd=${process.cwd()} execPath=${process.execPath} packaged=${String(app.isPackaged)} networkShare=${String(IS_WINDOWS_NETWORK_SHARE)}`
+);
+
+if (IS_WINDOWS_NETWORK_SHARE) {
+  appendStartupLog('network-share-workaround: enabled no-sandbox and disabled hardware acceleration');
+}
+
 app.whenReady().then(() => {
+  appendStartupLog('app-ready');
   createMainWindow();
 
   app.on('activate', () => {
@@ -753,10 +834,13 @@ app.whenReady().then(() => {
       createMainWindow();
     }
   });
+}).catch((error) => {
+  appendStartupLog(`when-ready-failed: ${formatError(error)}`);
 });
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
+    appendStartupLog('window-all-closed');
     app.quit();
   }
 });
