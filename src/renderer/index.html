@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonnie FX Capture</title>
+    <link rel="stylesheet" href="../../node_modules/flatpickr/dist/flatpickr.min.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Electron Desktop App</p>
+        <h1>Bonnie FX Capture</h1>
+        <p class="hero-copy">
+          导入日期列表，按指定币种查询中国银行外汇牌价页面，并将结果页截图保存到本地目录。
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>任务配置</h2>
+          <p>当前版本采用人工输入验证码，查询与截图批处理由应用自动完成。</p>
+        </div>
+
+        <div class="field">
+          <label for="date-file">日期列表文件</label>
+          <div class="inline-row">
+            <input id="date-file" type="file" accept=".txt,.csv" />
+            <button id="load-sample" type="button" class="ghost">载入示例格式</button>
+          </div>
+          <small>支持 `.txt` / `.csv`，每行一个日期，格式为 `YYYY-MM-DD`。</small>
+        </div>
+
+        <div class="field">
+          <label for="date-picker">日期内容</label>
+          <div class="inline-row">
+            <input id="date-picker" type="text" placeholder="点击选择日期" readonly />
+            <button id="add-date" type="button" class="ghost">添加到列表</button>
+            <button id="select-all-dates" type="button" class="ghost">全选</button>
+            <button id="invert-dates" type="button" class="ghost">反选</button>
+          </div>
+          <div id="date-list" class="date-list" role="group" aria-label="日期列表"></div>
+          <small>导入或手动添加后的日期默认全选，开始任务时只处理已勾选的日期。</small>
+        </div>
+
+        <div class="grid-two">
+          <div class="field">
+            <label for="currency-select">币种</label>
+            <select id="currency-select">
+              <option>正在加载币种...</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="output-directory">输出目录</label>
+            <div class="inline-row">
+              <input id="output-directory" type="text" readonly placeholder="请选择保存截图的目录" />
+              <button id="pick-output" type="button">选择目录</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="start-button" type="button" class="primary">开始批量截图</button>
+          <button id="open-output" type="button" class="ghost" disabled>打开输出目录</button>
+          <span id="status-chip" class="status-chip idle">待执行</span>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-head">
+          <h2>运行日志</h2>
+          <p>会显示当前日期、验证码等待状态以及保存结果。</p>
+        </div>
+        <div id="log-list" class="log-list"></div>
+      </section>
+
+      <footer class="panel footer-panel">
+        <div class="footer-meta">
+          <span id="app-version">版本加载中</span>
+          <span>Copyright © 2026 XiangLi. All rights reserved.</span>
+          <span>作者: XiangLi</span>
+        </div>
+        <p class="disclaimer">
+          免责说明：本软件仅用于经授权的公开页面辅助查询与截图归档，查询结果以中国银行官网实际展示为准。使用者应自行确认业务合规性、数据准确性及适用范围，作者不对因使用本软件产生的任何直接或间接损失承担责任。
+        </p>
+      </footer>
+    </main>
+
+    <div id="captcha-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">验证码</p>
+            <h2 id="captcha-date">待输入</h2>
+            <p id="captcha-progress" class="modal-progress">等待任务信息</p>
+          </div>
+          <span class="modal-tag">手动输入后继续</span>
+        </div>
+
+        <img id="captcha-image" alt="验证码截图" class="captcha-image" />
+
+        <label class="field" for="captcha-input">
+          <span>请输入当前验证码</span>
+          <input id="captcha-input" type="text" maxlength="12" autocomplete="off" />
+        </label>
+
+        <div class="actions">
+          <button id="captcha-submit" type="button" class="primary">提交并继续</button>
+          <button id="captcha-refresh" type="button" class="ghost">刷新验证码</button>
+          <button id="captcha-cancel" type="button" class="danger">取消任务</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../../node_modules/flatpickr/dist/flatpickr.min.js"></script>
+    <script src="../../node_modules/flatpickr/dist/l10n/zh.js"></script>
+    <script src="./renderer.js"></script>
+  </body>
+</html>

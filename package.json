@@ -1,0 +1,66 @@
+{
+  "name": "bonnie-fx-capture",
+  "version": "0.2.1",
+  "description": "Electron desktop app for querying Bank of China FX pages by date and saving screenshots.",
+  "main": "src/main.js",
+  "author": "XiangLi",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "com.xiangli.bonniefxcapture",
+    "productName": "Bonnie FX Capture",
+    "executableName": "BonnieFxCapture",
+    "artifactName": "Bonnie-FX-Package-${version}-${arch}.${ext}",
+    "copyright": "Copyright © 2026 XiangLi",
+    "files": [
+      "src/**/*",
+      "examples/**/*",
+      "package.json",
+      "README.md"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "mac": {
+      "icon": "build/generated-icons/app.icns",
+      "artifactName": "Bonnie-FX-Mac-Installer-${version}-${arch}.${ext}",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "artifactName": "Bonnie-FX-Windows-Installer-${version}-${arch}.${ext}",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "nsis": {
+      "include": "build/installer.nsh",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^35.1.5",
+    "electron-builder": "^24.13.3",
+    "icon-gen": "^5.0.0"
+  },
+  "dependencies": {
+    "flatpickr": "^4.6.13"
+  }
+}
