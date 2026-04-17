@@ -196,6 +196,16 @@ export class JobStateDO extends DurableObject {
     const state = await this.requireStateForUser(request);
     state.status = STATUS.CANCELLED;
     this.pushLog(state, '任务已取消。', 'warn');
+
+    if (state.successCount > 0 && !state.downloadKey) {
+      try {
+        await this.generateZipArchive(state, '-partial');
+        this.pushLog(state, `已保存已完成的 ${state.successCount} 个结果供下载。`, 'info');
+      } catch (error) {
+        this.pushLog(state, `打包部分结果失败: ${error.message}`, 'warn');
+      }
+    }
+
     await this.finalizeTerminalState(state);
     return json(publicState(await this.loadState()));
   }
@@ -526,15 +536,19 @@ export class JobStateDO extends DurableObject {
     }
   }
 
+  async generateZipArchive(state, filenameSuffix = '') {
+    const zipBuffer = await this.buildZipArchive(state);
+    const filename = `Bonnie-FX-${state.jobId}${filenameSuffix}.zip`;
+    const key = zipKey(state.jobId, filename);
+    await this.ctx.storage.put(`blob:${key}`, zipBuffer);
+
+    state.downloadKey = key;
+    state.downloadFilename = filename;
+  }
+
   async completeJob(state) {
     try {
-      const zipBuffer = await this.buildZipArchive(state);
-      const filename = `Bonnie-FX-${state.jobId}.zip`;
-      const key = zipKey(state.jobId, filename);
-      await this.ctx.storage.put(`blob:${key}`, zipBuffer);
-
-      state.downloadKey = key;
-      state.downloadFilename = filename;
+      await this.generateZipArchive(state);
       state.status = STATUS.COMPLETED;
       this.pushLog(
         state,
@@ -578,6 +592,16 @@ export class JobStateDO extends DurableObject {
   async failJob(state, message) {
     state.status = STATUS.FAILED;
     this.pushLog(state, message, 'error');
+
+    if (state.successCount > 0 && !state.downloadKey) {
+      try {
+        await this.generateZipArchive(state, '-partial');
+        this.pushLog(state, `已保存已完成的 ${state.successCount} 个结果供下载。`, 'info');
+      } catch (error) {
+        this.pushLog(state, `打包部分结果失败: ${error.message}`, 'warn');
+      }
+    }
+
     await this.finalizeTerminalState(state);
   }
 
