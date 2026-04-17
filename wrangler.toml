@@ -1,0 +1,37 @@
+"$schema" = "./node_modules/wrangler/config-schema.json"
+name = "bonnie-fx-capture-web"
+main = "./cloudflare/worker.js"
+compatibility_date = "2026-04-17"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+APP_NAME = "Bonnie FX Capture"
+APP_VERSION = "0.3.0"
+APP_URL = "https://srh.bankofchina.com/search/whpj/search_cn.jsp"
+RESULT_TTL_SECONDS = "600"
+DEV_USER_EMAIL = "local-dev@example.com"
+
+[browser]
+binding = "MYBROWSER"
+remote = true
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]
+
+[[durable_objects.bindings]]
+name = "JOB_STATE"
+class_name = "JobStateDO"
+
+[[durable_objects.bindings]]
+name = "USER_GATE"
+class_name = "UserGateDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["JobStateDO", "UserGateDO"]
+
+[triggers]
+crons = ["*/5 * * * *"]

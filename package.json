@@ -1,70 +1,21 @@
 {
-  "name": "bonnie-fx-capture",
-  "version": "0.2.5",
-  "description": "Electron desktop app for querying Bank of China FX pages by date and saving screenshots.",
-  "main": "src/main.js",
+  "name": "bonnie-fx-capture-cloudflare",
+  "version": "0.3.0",
+  "description": "Cloudflare Pages + Workers app for querying Bank of China FX pages and generating screenshot ZIP archives.",
+  "type": "module",
+  "private": true,
   "author": "XiangLi",
   "license": "MIT",
   "scripts": {
-    "start": "electron .",
-    "dev": "electron .",
-    "pack": "electron-builder --dir",
-    "dist": "electron-builder",
-    "dist:win-portable": "electron-builder --win portable --x64"
-  },
-  "build": {
-    "appId": "com.xiangli.bonniefxcapture",
-    "productName": "Bonnie FX Capture",
-    "executableName": "BonnieFxCapture",
-    "artifactName": "Bonnie-FX-Package-${version}-${arch}.${ext}",
-    "copyright": "Copyright © 2026 XiangLi",
-    "files": [
-      "src/**/*",
-      "examples/**/*",
-      "package.json",
-      "README.md"
-    ],
-    "directories": {
-      "buildResources": "build"
-    },
-    "mac": {
-      "icon": "build/generated-icons/app.icns",
-      "artifactName": "Bonnie-FX-Mac-Installer-${version}-${arch}.${ext}",
-      "target": [
-        "dmg",
-        "zip"
-      ]
-    },
-    "win": {
-      "icon": "build/icon.ico",
-      "artifactName": "Bonnie-FX-Windows-Installer-${version}-${arch}.${ext}",
-      "target": [
-        "nsis",
-        "zip"
-      ]
-    },
-    "nsis": {
-      "include": "build/installer.nsh",
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico"
-    },
-    "portable": {
-      "artifactName": "Bonnie-FX-Windows-Portable-${version}-${arch}.${ext}"
-    },
-    "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ]
-    }
+    "postinstall": "node ./scripts/patch-cloudflare-puppeteer.mjs",
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "wrangler deploy --dry-run",
+    "cf:typegen": "wrangler types"
   },
   "devDependencies": {
-    "electron": "^35.1.5",
-    "electron-builder": "^24.13.3",
-    "icon-gen": "^5.0.0"
-  },
-  "dependencies": {
-    "flatpickr": "^4.6.13"
+    "@cloudflare/puppeteer": "^1.1.0",
+    "fflate": "^0.8.2",
+    "wrangler": "^4.83.0"
   }
 }

@@ -4,3 +4,4 @@ release
 out
 .DS_Store
 *.log
+.wrangler

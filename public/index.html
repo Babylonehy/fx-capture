@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonnie FX Capture</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">Cloudflare Web App</p>
+        <h1>Bonnie FX Capture</h1>
+        <p class="hero-copy">
+          导入日期列表，按指定币种查询中国银行外汇牌价，并将结果页截图打包为 ZIP 下载。验证码仍需人工输入，任务结果默认保留 10 分钟。
+        </p>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>任务配置</h2>
+          <p>网站版由 Cloudflare Workers 负责查询与截图，你只需要在网页里输入验证码并下载结果。</p>
+        </div>
+
+        <div class="grid-two">
+          <div class="field">
+            <label for="user-email">当前用户</label>
+            <input id="user-email" type="text" readonly placeholder="加载访问身份中" />
+          </div>
+
+          <div class="field">
+            <label for="currency-select">币种</label>
+            <select id="currency-select">
+              <option>正在加载币种...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="date-file">日期列表文件</label>
+          <div class="inline-row">
+            <input id="date-file" type="file" accept=".txt,.csv" />
+            <button id="load-sample" type="button" class="ghost">载入示例格式</button>
+          </div>
+          <small>支持 `.txt` / `.csv`，每行一个日期，格式为 `YYYY-MM-DD`。</small>
+        </div>
+
+        <div class="field">
+          <label for="date-picker">日期内容</label>
+          <div class="inline-row">
+            <input id="date-picker" type="date" />
+            <button id="add-date" type="button" class="ghost">添加到列表</button>
+            <button id="select-all-dates" type="button" class="ghost">全选</button>
+            <button id="invert-dates" type="button" class="ghost">反选</button>
+          </div>
+          <div id="date-list" class="date-list" role="group" aria-label="日期列表"></div>
+          <small>导入或手动添加后的日期默认全选，任务会按勾选顺序处理。每个用户同一时间只允许一个活动任务。</small>
+        </div>
+
+        <div class="actions">
+          <button id="start-button" type="button" class="primary">开始批量截图</button>
+          <a id="download-button" class="ghost button-link disabled" href="#" aria-disabled="true">下载结果 ZIP</a>
+          <span id="status-chip" class="status-chip idle">待执行</span>
+        </div>
+      </section>
+
+      <section class="panel log-panel">
+        <div class="panel-head">
+          <h2>运行日志</h2>
+          <p>会显示当前日期、验证码等待状态以及截图生成结果。</p>
+        </div>
+        <div id="job-summary" class="job-summary hidden"></div>
+        <div id="log-list" class="log-list"></div>
+      </section>
+
+      <footer class="panel footer-panel">
+        <div class="footer-meta">
+          <span id="app-version">版本加载中</span>
+          <span id="active-job-label">当前无活动任务</span>
+          <span>作者: XiangLi</span>
+        </div>
+        <p class="disclaimer">
+          免责说明：本网站仅用于经授权的公开页面辅助查询与截图归档，查询结果以中国银行官网实际展示为准。使用者应自行确认业务合规性、数据准确性及适用范围。
+        </p>
+      </footer>
+    </main>
+
+    <div id="captcha-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">验证码</p>
+            <h2 id="captcha-date">待输入</h2>
+            <p id="captcha-progress" class="modal-progress">等待任务信息</p>
+          </div>
+          <span class="modal-tag">网页实时输入后继续</span>
+        </div>
+
+        <img id="captcha-image" alt="验证码截图" class="captcha-image" />
+
+        <label class="field" for="captcha-input">
+          <span>请输入当前验证码</span>
+          <input id="captcha-input" type="text" maxlength="12" autocomplete="off" />
+        </label>
+
+        <div class="actions">
+          <button id="captcha-submit" type="button" class="primary">提交并继续</button>
+          <button id="captcha-refresh" type="button" class="ghost">刷新验证码</button>
+          <button id="captcha-cancel" type="button" class="danger">取消任务</button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
